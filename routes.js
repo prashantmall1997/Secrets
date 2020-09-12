@@ -1,6 +1,7 @@
 //jshint esversion:8
 
-const md5 = require('md5');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 //Models
 const usersModel = require("./schemas/userSchema");
@@ -19,7 +20,7 @@ module.exports = function(app) {
     })
     .post((req, res) => {
       const username = req.body.username;
-      const password = md5(req.body.password);
+      const password = req.body.password;
       usersModel.findOne({
         email: username
       }, (err, foundUser) => {
@@ -27,9 +28,11 @@ module.exports = function(app) {
           console.log(err);
         } else {
           if (foundUser) {
-            if (foundUser.password === password) {
-              res.render("secrets");
-            }
+            bcrypt.compare(password, foundUser.password, (err, result) => {
+              if (result === true) {
+                res.render("secrets");
+              }
+            });
           }
         }
       });
@@ -40,17 +43,20 @@ module.exports = function(app) {
       res.render("register");
     })
     .post((req, res) => {
-      const newUser = usersModel({
-        email: req.body.username,
-        password: md5(req.body.password)
-      });
+      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        // Store hash in your password DB.
+        const newUser = usersModel({
+          email: req.body.username,
+          password: hash
+        });
 
-      newUser.save((err) => {
-        if (err) {
-          console.log(err);
-        } else {
-          res.render("secrets");
-        }
+        newUser.save((err) => {
+          if (err) {
+            console.log(err);
+          } else {
+            res.render("secrets");
+          }
+        });
       });
     });
 
