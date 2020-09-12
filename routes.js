@@ -1,5 +1,7 @@
 //jshint esversion:8
 
+const md5 = require('md5');
+
 //Models
 const usersModel = require("./schemas/userSchema");
 
@@ -17,7 +19,7 @@ module.exports = function(app) {
     })
     .post((req, res) => {
       const username = req.body.username;
-      const password = req.body.password;
+      const password = md5(req.body.password);
       usersModel.findOne({
         email: username
       }, (err, foundUser) => {
@@ -40,7 +42,7 @@ module.exports = function(app) {
     .post((req, res) => {
       const newUser = usersModel({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
       });
 
       newUser.save((err) => {
