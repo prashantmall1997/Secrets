@@ -1,13 +1,12 @@
 //jshint esversion:8
 
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const passport = require("passport");
 
 //Models
-const usersModel = require("./schemas/userSchema");
+const usersModel = require("./app");
 
 //Routes
-module.exports = function(app) {
+module.exports = function (app) {
 
   app.route("/")
     .get((req, res) => {
@@ -19,21 +18,17 @@ module.exports = function(app) {
       res.render("login");
     })
     .post((req, res) => {
-      const username = req.body.username;
-      const password = req.body.password;
-      usersModel.findOne({
-        email: username
-      }, (err, foundUser) => {
+      const user = new usersModel({
+        username: req.body.username,
+        password: req.body.password
+      });
+      req.login(user, (err) => {
         if (err) {
           console.log(err);
         } else {
-          if (foundUser) {
-            bcrypt.compare(password, foundUser.password, (err, result) => {
-              if (result === true) {
-                res.render("secrets");
-              }
-            });
-          }
+          passport.authenticate("local")(req, res, () => {
+            res.redirect("/secrets");
+          });
         }
       });
     });
@@ -43,21 +38,32 @@ module.exports = function(app) {
       res.render("register");
     })
     .post((req, res) => {
-      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
-        // Store hash in your password DB.
-        const newUser = usersModel({
-          email: req.body.username,
-          password: hash
-        });
-
-        newUser.save((err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            res.render("secrets");
-          }
-        });
+      usersModel.register({
+        username: req.body.username
+      }, req.body.password, (err, user) => {
+        if (err) {
+          console.log(err);
+          res.redirect("/register");
+        } else {
+          passport.authenticate("local")(req, res, () => {
+            res.redirect("/secrets");
+          });
+        }
       });
     });
 
+  app.route("/secrets")
+    .get((req, res) => {
+      if (req.isAuthenticated()) {
+        res.render("secrets");
+      } else {
+        res.redirect("/login");
+      }
+    });
+
+  app.route("/logout")
+    .get((req, res) => {
+      req.logout();
+      res.redirect("/");
+    });
 };
