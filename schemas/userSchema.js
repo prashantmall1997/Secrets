@@ -1,22 +1,22 @@
 //jshint esversion:8
 
 const mongoose = require('mongoose');
+const findOrCreatePlugin = require('mongoose-findorcreate');
 const Schema = mongoose.Schema;
 mongoose.set('useCreateIndex', true);
 const passportLocalMongoose = require('passport-local-mongoose');
+var findOrCreate = require('mongoose-findorcreate');
 
 const userSchema = new Schema({
-  username: {
-    required: true,
-    type: String,
-    unique: true
-  },
-  password: {
-    type: String
-  }
+  username: String,
+  password: String,
+  googleId: String
 });
 
-userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(passportLocalMongoose, {
+  usernameUnique: false
+});
+userSchema.plugin(findOrCreate);
 
 const userModel = mongoose.model('user', userSchema);
 

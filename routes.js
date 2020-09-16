@@ -66,4 +66,25 @@ module.exports = function (app) {
       req.logout();
       res.redirect("/");
     });
+
+  // app.route("/auth/google")
+  //   .get((req, res) => {
+  //     passport.authenticate("google", {
+  //       scope: ['profile']
+  //     });
+  //   });
+
+  app.get('/auth/google',
+    passport.authenticate('google', {
+      scope: ['profile']
+    }));
+
+  app.get('/auth/google/secrets',
+    passport.authenticate('google', {
+      failureRedirect: '/login'
+    }),
+    function (req, res) {
+      // Successful authentication, redirect home.
+      res.redirect('/secrets');
+    });
 };

@@ -29,3 +29,9 @@ Drawback
 
 Level 4 - Salting and Hashing Password using bcrypt
 - Stores salted (Rounds based on saltRounds input) and then hashed password a in DB
+
+Level 5 - Cookies
+- Used `passport, passport-local, passport-local-mongoose & express-session`
+
+Level 6 - Social Login
+- Implemented Google Social Login

@@ -1,11 +1,13 @@
 //jshint esversion:8
 
+require('dotenv').config();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
 const express = require("express");
 const session = require('express-session');
 const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 //Models
 const usersModel = require("./schemas/userSchema");
@@ -28,8 +30,31 @@ app.use(passport.session());
 
 passport.use(usersModel.createStrategy());
 
-passport.serializeUser(usersModel.serializeUser());
-passport.deserializeUser(usersModel.deserializeUser());
+passport.serializeUser(function (user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function (id, done) {
+  usersModel.findById(id, function (err, user) {
+    done(err, user);
+  });
+});
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets",
+    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+  },
+  function (accessToken, refreshToken, profile, cb) {
+    usersModel.findOrCreate({
+      googleId: profile.id,
+      username: profile.id
+    }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
 
 //Port
 const port = process.env.PORT || 3000;
