@@ -54,11 +54,21 @@ module.exports = function (app) {
 
   app.route("/secrets")
     .get((req, res) => {
-      if (req.isAuthenticated()) {
-        res.render("secrets");
-      } else {
-        res.redirect("/login");
-      }
+      usersModel.find({
+        "secret": {
+          $ne: null
+        }
+      }, (err, foundUsers) => {
+        if (err) {
+          console.log(err);
+        } else {
+          if (foundUsers) {
+            res.render("secrets", {
+              userWithSecrets: foundUsers
+            });
+          }
+        }
+      });
     });
 
   app.route("/logout")
@@ -86,5 +96,31 @@ module.exports = function (app) {
     function (req, res) {
       // Successful authentication, redirect home.
       res.redirect('/secrets');
+    });
+
+  app.route("/submit")
+    .get((req, res) => {
+      if (req.isAuthenticated()) {
+        res.render("submit");
+      } else {
+        res.redirect("/login");
+      }
+    })
+
+    .post((req, res) => {
+      const submittedSecret = req.body.secret;
+
+      usersModel.findById(req.user.id, (err, foundUser) => {
+        if (err) {
+          console.log(err);
+        } else {
+          if (foundUser) {
+            foundUser.secret = submittedSecret;
+            foundUser.save(() => {
+              res.redirect("/secrets");
+            });
+          }
+        }
+      });
     });
 };
